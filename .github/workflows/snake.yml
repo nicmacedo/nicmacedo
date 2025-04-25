@@ -2,11 +2,11 @@ name: GitHub Snake Game
 
 on:
   schedule:
-    - cron: "0 0 * * *"
-  workflow_dispatch:
+    - cron: "0 0 * * *"  # Executa diariamente à meia-noite (UTC)
+  workflow_dispatch:     # Permite acionamento manual
   push:
     branches:
-      - main
+      - main            # Dispara no push para a branch main
 
 jobs:
   generate:
@@ -14,17 +14,18 @@ jobs:
     timeout-minutes: 10
 
     steps:
-      # Step 1: Checkout the repository (atualizado para v4 com configurações seguras)
+      # Passo 1: Checkout seguro do repositório
       - name: Checkout Repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Importante para o snk poder acessar o histórico de commits
-          token: ${{ secrets.GITHUB_TOKEN }}
+          fetch-depth: 0           # Clona todo o histórico (necessário para o snk)
+          token: ${{ secrets.GITHUB_TOKEN }}  # Garante permissões de escrita
+          submodules: false        # Desativa submódulos (se não forem necessários)
 
-      # Step 2: Generate the snake animations
-      - name: Generate GitHub Contributions Snake Animations
+      # Passo 2: Gera a animação da cobrinha
+      - name: Generate Snake Animation
         uses: Platane/snk@v3
-        id: snk
+        id: generate-snake
         with:
           github_user_name: ${{ github.repository_owner }}
           outputs: |
@@ -32,7 +33,14 @@ jobs:
             dist/github-snake-dark.svg?palette=github-dark
             dist/ocean.gif?color_snake=orange&color_dots=#bfd6f6,#8dbdff,#64a1f4,#4b91f1,#3c7dd9
 
-      # Step 3: Deploy the generated files to the 'output' branch
+      # Passo 3: Configurações extras para evitar erro 128
+      - name: Fix Git Permissions
+        run: |
+          git config --global user.name "GitHub Actions"
+          git config --global user.email "actions@github.com"
+          git config --global --add safe.directory /github/workspace
+
+      # Passo 4: Faz deploy para a branch 'output'
       - name: Deploy to Output Branch
         uses: peaceiris/actions-gh-pages@v3
         with:
